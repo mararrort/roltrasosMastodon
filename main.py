@@ -68,20 +68,20 @@ elif arguments.type == 'Monthly':
     yesterday = today - timedelta(days=1)
     title = 'Informe menusal: {}'.format(yesterday.strftime('%B'))
 
-publication = title + '\n'
+publication = title
 if startedPresales:
-    publication += 'Se han iniciado las siguientes preventas:\n'
+    publication += '\nSe han iniciado las siguientes preventas:\n'
     for presale in startedPresales:
-        publication += '\t{} de {}\n'.format(presale[0], presale[1])
+        publication += '* {} de {}\n'.format(presale[0], presale[1])
 
 if pendingPresales:
-    publication += 'Se espera la llegada de los siguientes manuales ✈️:\n'
+    publication += '\nSe espera la llegada de los siguientes manuales ✈️:\n'
     for presale in pendingPresales:
-        publication += '\t{} de {} ({})\n'.format(presale[0], presale[1], presale[2])
+        publication += '* {} de {} ({})\n'.format(presale[0], presale[1], presale[2])
 
 if endingPresales:
-    publication += 'Se han entregado los siguientes manuales:\n'
+    publication += '\nSe han entregado los siguientes manuales:\n'
     for presale in endingPresales:
-        publication += '\t{} de {}\n'.format(presale[0], presale[1])
+        publication += '* {} de {}\n'.format(presale[0], presale[1])
 
 mastodon.status_post(publication)
