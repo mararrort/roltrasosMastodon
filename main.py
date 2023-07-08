@@ -43,6 +43,7 @@ SELECT presales.name, editorials.name, if(announced_end < CURDATE(), 'Retraso', 
 FROM presales
 INNER JOIN editorials ON presales.editorial_id = editorials.id
 WHERE presales.end is null
+AND presales.state NOT In ('Recaudando', 'Abandonado', 'Entregado')
 ORDER by presales.start ASC
 """
 cursor.execute(pendingPresalesQuery)
