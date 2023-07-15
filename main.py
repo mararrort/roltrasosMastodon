@@ -2,16 +2,10 @@ from mastodon import Mastodon
 from dotenv import load_dotenv
 from os import getenv
 import mysql.connector
-import argparse
 from datetime import date, timedelta
 import locale
 
 locale.setlocale(locale.LC_ALL, 'es_ES.UTF-8')
-
-arg = argparse.ArgumentParser()
-arg.add_argument('type', nargs='?', choices=['Weekly', 'Monthly'])
-
-arguments = arg.parse_args()
 
 load_dotenv()
 
@@ -21,22 +15,18 @@ mastodon.log_in(username=getenv('MASTODON_USER'), password=getenv('MASTODON_PASS
 cnx = mysql.connector.connect(user=getenv('MYSQL_USER'), database='verkami_cens', password=getenv('MYSQL_PASSWORD'))
 cursor = cnx.cursor()
 
-if arguments.type == 'Weekly':
-    today = date.today()
-    timeParameter = (today-timedelta(weeks=1),)
-elif arguments.type == 'Monthly':
-    today = date.today()
-    timeParameter = (today.replace(month=today.month-1),)
+today = date.today()
+timeParameter = (today-timedelta(weeks=1),)
 
-createdPresalesQuery = """
+fundingPresalesQuery = """
 SELECT presales.name, editorials.name
 FROM presales
 INNER JOIN editorials ON presales.editorial_id = editorials.id
-WHERE start >= %s
+WHERE presales.state = 'Recaudando'
+ORDER BY presales.start ASC;
 """
-
-cursor.execute(createdPresalesQuery, timeParameter)
-startedPresales = cursor.fetchall()
+cursor.execute(fundingPresalesQuery)
+fundingPresales = cursor.fetchall()
 
 pendingPresalesQuery = """
 SELECT presales.name, editorials.name, if(announced_end < CURDATE(), 'Retraso', 'Puntual')
@@ -58,20 +48,14 @@ WHERE end >= %s
 cursor.execute(endingPresalesQuery, timeParameter)
 endingPresales = cursor.fetchall()
 
-if arguments.type == 'Weekly':
-    today = date.today()
-    firstDay = today - timedelta(weeks=1)
-    lastDay = today - timedelta(days=1)
-    title = 'Informe semanal: Del {} de {} al {} de {}'.format(firstDay.day, firstDay.strftime('%B'), lastDay.day, lastDay.strftime('%B'))
-elif arguments.type == 'Monthly':
-    today = date.today()
-    yesterday = today - timedelta(days=1)
-    title = 'Informe menusal: {}'.format(yesterday.strftime('%B'))
+firstDay = today - timedelta(weeks=1)
+lastDay = today - timedelta(days=1)
+title = 'Informe semanal: Del {} de {} al {} de {}'.format(firstDay.day, firstDay.strftime('%B'), lastDay.day, lastDay.strftime('%B'))
 
 publication = title
-if startedPresales:
-    publication += '\nSe han iniciado las siguientes preventas:\n'
-    for presale in startedPresales:
+if fundingPresales:
+    publication += '\nSe están financiando estos juegos:\n'
+    for presale in fundingPresales:
         publication += '* {} de {}\n'.format(presale[0], presale[1])
 
 if pendingPresales:
